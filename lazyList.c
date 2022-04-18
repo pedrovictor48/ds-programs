@@ -2,16 +2,18 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#define MAX_SIZE 20
+#define MAX_SIZE 1000
 const int VAZIO = INT_MIN;
+int TAM_MAX;
 
-int conversor(int i, int tam) {
+int conversor(int i) {
     if(i % 2 == 0) return i/2;
-    else return tam - ((i + 1) / 2);
+    else return TAM_MAX - ((i + 1) / 2);
 }
 
 //definindo a estrutura da lista:
 typedef struct lazyList {
+    int vetor[MAX_SIZE], expoente[MAX_SIZE], tam, indice_min;
     /*
     Desc. das variáveis:
     vetor: espaço na memória responsável por guardar os elementos.
@@ -19,7 +21,6 @@ typedef struct lazyList {
     tam: tamanho da lista.
     indice_min: indice minimo até então alterado.
     */
-    int vetor[MAX_SIZE], expoente[MAX_SIZE], tam, indice_min;
 } lazyList;
 
 lazyList *criar_lazyList() {
@@ -36,27 +37,27 @@ lazyList *criar_lazyList() {
 
 void ajeitar_lazyList(lazyList *lazy_list) {
     //array temporária:
-    int temp[MAX_SIZE];
-    for(int i = 0; i < MAX_SIZE; i++)
+    int temp[TAM_MAX];
+    for(int i = 0; i < TAM_MAX; i++)
         temp[i] = VAZIO;
     //indice auxiliar que vai incrementando:
     int indTemp = 0;
-    for(int i = 0; i < MAX_SIZE; i++) {
+    for(int i = 0; i < TAM_MAX; i++) {
         //atribuindo VAZIO caso os elementos já tenham acabado:
         //pegando tanto o possível elemento inserido acima
         //quanto o elemento do vetor em si
-        int indReal = conversor(i, MAX_SIZE);
+        int indReal = conversor(i);
         int elementoAcima = (lazy_list->expoente)[indReal],
             elementoIndice = (lazy_list->vetor)[indReal];
         
         //se algum for diferente de vazio, ponha na temporaria:
         if(elementoAcima != VAZIO) {
-            int indTempReal = conversor(indTemp, MAX_SIZE);
+            int indTempReal = conversor(indTemp);
             temp[indTempReal] = elementoAcima;
             indTemp += 1;
         }
         if(elementoIndice != VAZIO) {
-            int indTempReal = conversor(indTemp, MAX_SIZE);
+            int indTempReal = conversor(indTemp);
             temp[indTempReal] = elementoIndice;
             indTemp += 1;
         }
@@ -65,7 +66,7 @@ void ajeitar_lazyList(lazyList *lazy_list) {
     }
 
     //copiando para a struct:
-    for(int i = 0; i < MAX_SIZE; i++)
+    for(int i = 0; i < TAM_MAX; i++)
         (lazy_list->vetor)[i] = temp[i];
     
     //ao ajeitar, o minimo indice volta para o maior possível:
@@ -80,7 +81,7 @@ void inserir_lazyList(lazyList *lazy_list, int valor, int indice) {
     //prossiga:
     lazy_list->indice_min = indice;
     //já que estou adicionando, insiro no expoente;
-    indice = conversor(indice, MAX_SIZE);
+    indice = conversor(indice);
     (lazy_list->expoente)[indice] = valor;
     lazy_list->tam += 1;
 }
@@ -95,7 +96,7 @@ void remover_lazyList(lazyList *lazy_list, int indice) {
     if(lazy_list->indice_min > indice)
         lazy_list->indice_min = indice;
     //já que estou removendo, insira um valor vazio no vetor:
-    indice = conversor(indice, MAX_SIZE);
+    indice = conversor(indice);
     (lazy_list->vetor)[indice] = VAZIO;
     lazy_list->tam -= 1;
 }
@@ -109,15 +110,15 @@ void trocar_lazyList(lazyList *lazy_list, int valor, int indice) {
     if(lazy_list->indice_min > indice)
         lazy_list->indice_min = indice;
     //já que estou adicionando, insiro no expoente;
-    indice = conversor(indice, MAX_SIZE);
-    (lazy_list->expoente)[indice] = valor;
+    int indiceReal = conversor(indice);
+    (lazy_list->vetor)[indiceReal] = valor;
 }
 
 void print_lazyList(lazyList *lazy_list) {
     printf("Representação da lista:\n");
     ajeitar_lazyList(lazy_list);
     for(int i = 0; i < lazy_list->tam; i++) {
-        int indiceReal = conversor(i, MAX_SIZE);
+        int indiceReal = conversor(i);
         printf("%d -> ", (lazy_list->vetor)[indiceReal]);
     }
     printf("@\n");
@@ -125,7 +126,7 @@ void print_lazyList(lazyList *lazy_list) {
 
 void print_memoria(lazyList *lazy_list) {
     printf("Representacao da memoria:\n");
-    for(int i = 0; i < MAX_SIZE; i++) {
+    for(int i = 0; i < TAM_MAX; i++) {
         int value = (lazy_list->vetor)[i];
         if(value != VAZIO) printf("%d ", value);
         else printf("@ ");
@@ -139,7 +140,7 @@ void requisitar_inserts(lazyList *lazy_list) {
     printf("Requisitando inserções, aperte enter sem enviar nada para sair:\n");
     while(1) {
         scanf("%d%lld", &indice, &valor);
-        if(indice < 0 || indice > MAX_SIZE) {
+        if(indice < 0 || indice > TAM_MAX) {
             printf("Indice fora o range, tente novamente:\n");
             continue;
         }
@@ -160,7 +161,7 @@ void requistar_remocao(lazyList *lazy_list) {
     printf("Requisitando remoções, aperte enter sem enviar nada para sair:\n");
     while(1) {
         scanf("%d", &indice);
-        if(indice < 0 || indice >= MAX_SIZE) {
+        if(indice < 0 || indice >= lazy_list->tam) {
             printf("Indice fora o range, tente novamente:\n");
             continue;
         }
@@ -188,7 +189,7 @@ void requisitar_trocas(lazyList *lazy_list) {
             continue;
         }
         printf("Realizado:\n");
-        inserir_lazyList(lazy_list, valor, indice);
+        trocar_lazyList(lazy_list, valor, indice);
         print_lazyList(lazy_list);
         print_memoria(lazy_list);
         break;
@@ -198,10 +199,16 @@ void requisitar_trocas(lazyList *lazy_list) {
 
 int main() {
     lazyList *lazy_list = criar_lazyList();
+    printf("Insira o tamanho máximo para sua lista:\n");
+    scanf("%d", &TAM_MAX);
+    while(TAM_MAX > MAX_SIZE) {
+        printf("Este tamanho ultrapassou o limite, tente outro:\n");
+        scanf("%d", &TAM_MAX);
+    }
     
+    printf("Escolha sua opção:\n1)Inserir.\n2)Remover.\n3)Trocar.\n4)Sair\n");
     while(1) {
         int escolha;
-        printf("Escolha sua opção:\n1)Inserir.\n2)Remover.\n3)Trocar.\n4)Sair\n");
         scanf("%d", &escolha);
         if(escolha == 1) requisitar_inserts(lazy_list);
         else if(escolha == 2) requistar_remocao(lazy_list);
@@ -211,8 +218,6 @@ int main() {
             printf("Escolha inválida, tente novamente:\n");
             continue;
         }
-        printf("--------\n");
+        printf("\nEscolha outra vez:\n");
     }
-    
-    //print_memoria(lazy_list);
 }
